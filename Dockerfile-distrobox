@@ -1,0 +1,23 @@
+FROM ghcr.io/electronic-mango/cachyos-docker-znver4/base:latest
+
+RUN pacman -Suy --noconfirm \
+    base-devel \
+    git \
+    less \
+    man-db \
+    man-pages \
+    which \
+    bat \
+    eza \
+    fd \
+    fzf \
+    neovim \
+    ripgrep \
+    tealdeer \
+    zoxide \
+    fish \
+    typos \
+    gitleaks && \
+    yes | pacman -Scc --noconfirm && \
+    rm -rf /var/lib/pacman/sync/* && \
+    find /var/cache/pacman/ -type f -delete
