@@ -23,6 +23,7 @@ jobs:
 
   build-distrobox:
     needs: build-base
+    if: needs.build-base.outputs.published == 'true'
     uses: ./.github/workflows/build-image.yml
     with:
       variant: distrobox
