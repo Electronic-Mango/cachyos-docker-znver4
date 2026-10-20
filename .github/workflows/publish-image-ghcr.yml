@@ -21,6 +21,8 @@ jobs:
       attestations: write
       id-token: write
     steps:
+      - name: Show runner CPU capabilities
+        run: lscpu
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Log in to the Container registry
