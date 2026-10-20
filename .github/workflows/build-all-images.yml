@@ -15,16 +15,42 @@ permissions:
   id-token: write
 
 jobs:
-  build-base:
-    uses: ./.github/workflows/build-image.yml
-    with:
-      variant: base
-      dockerfile: ./Dockerfile
-
-  build-distrobox:
-    needs: build-base
-    if: needs.build-base.outputs.published == 'true'
-    uses: ./.github/workflows/build-image.yml
-    with:
-      variant: distrobox
-      dockerfile: ./Dockerfile-distrobox
+  build-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show runner CPU capabilities
+        run: lscpu
+      - name: Check runner CPU compatibility
+        id: cpu
+        shell: bash
+        run: |
+          cpu_info=$(LC_ALL=C lscpu)
+          if grep -qw avx512f <<< "$cpu_info"; then
+            echo "supported=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "supported=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping image builds: runner does not expose avx512f."
+            echo "Image builds skipped: runner does not expose avx512f." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Checkout repository
+        if: steps.cpu.outputs.supported == 'true'
+        uses: actions/checkout@v6
+      - name: Log in to the Container registry
+        if: steps.cpu.outputs.supported == 'true'
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish base image
+        if: steps.cpu.outputs.supported == 'true'
+        uses: ./.github/actions/build-image
+        with:
+          variant: base
+          dockerfile: ./Dockerfile
+      - name: Build and publish Distrobox image
+        if: steps.cpu.outputs.supported == 'true'
+        uses: ./.github/actions/build-image
+        with:
+          variant: distrobox
+          dockerfile: ./Dockerfile-distrobox
