@@ -1,5 +1,16 @@
 FROM ghcr.io/electronic-mango/cachyos-docker-znver4/base:latest
 
+ARG REPO_NAME=electronic-mango
+ARG REPO_SERVER=https://github.com/Electronic-Mango/arch-repository/releases/latest/download
+ARG KEYS_URL=https://raw.githubusercontent.com/Electronic-Mango/arch-repository/main/keys
+
+RUN curl -fsSL "$KEYS_URL/gpg-public-key.asc" -o /tmp/electronic-mango-key.asc && \
+    curl -fsSL "$KEYS_URL/gpg-fingerprint.asc" -o /tmp/electronic-mango-fingerprint.asc && \
+    pacman-key --add /tmp/electronic-mango-key.asc && \
+    pacman-key --lsign-key "$(tr -d '[:space:]' < /tmp/electronic-mango-fingerprint.asc)" && \
+    rm /tmp/electronic-mango-key.asc /tmp/electronic-mango-fingerprint.asc && \
+    printf '\n[%s]\nServer = %s\n' "$REPO_NAME" "$REPO_SERVER" >> /etc/pacman.conf
+
 RUN pacman -Suy --noconfirm \
     base-devel \
     git \
